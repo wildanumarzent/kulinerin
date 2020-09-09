@@ -1,0 +1,5 @@
+documentasi kulinerin dengan vue js.
+1. install vue js CLI
+2. Install Botsrap vue. 
+3. install axios untuk api nya 
+4. intsall vue toast notification. dan import di main js
