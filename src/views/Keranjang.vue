@@ -1,6 +1,6 @@
 <template>
   <div class="keranjang">
-    <Navbar :updateKeranjang ="Keranjangs" />
+    <Navbar :updateKeranjang="Keranjangs" />
     <div class="container">
       <!-- breadcrump -->
       <div class="row">
@@ -71,6 +71,26 @@
           </div>
         </div>
       </div>
+
+      <!-- form ceheckout -->
+      <div class="row justify-content-end">
+        <div class="col-md-4">
+          <form v-on:submit.prevent>
+            <div class="form-group">
+              <label for="Nama">Nama</label>
+              <input type="text" class="form-control" v-model="pesan.nama" />
+            </div>
+
+            <div class="form-group">
+              <label for="noMeja">Nomor Meja</label>
+              <input type="text" class="form-control" v-model="pesan.noMeja" />
+            </div>
+            <button type="submit" class="btn btn-success float-right" @click="checkout">
+              <b-icon-cart></b-icon-cart>checkout
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -87,35 +107,71 @@ export default {
   data() {
     return {
       Keranjangs: [],
+      pesan: {},
     };
   },
-    // props adalah menangkap hasil prameter yang dikirim oleh component lain ke komponen lainnya
-   
+  // props adalah menangkap hasil prameter yang dikirim oleh component lain ke komponen lainnya
+
   methods: {
     setKeranjang(data) {
       this.Keranjangs = data;
     },
     hapusKeranjang(id) {
       axios
-        .delete("http://localhost:3000/keranjangs/"+id)
+        .delete("http://localhost:3000/keranjangs/" + id)
         .then(() => {
-             //    jika berhasil maka gunakan toast vue toas norification untuk notifikasinya
-            this.$toast.error("sukses menghapus data", {
+          //    jika berhasil maka gunakan toast vue toas norification untuk notifikasinya
+          this.$toast.error("sukses menghapus data", {
+            // sesuaikan atribut yang di butuhkan. attributnya ada di dokumentasinya
+            type: "error",
+            position: "top-right",
+            duration: 3000,
+            dismissible: true,
+          });
+
+          // hapus data supaya tidak mereload
+          axios
+            .get("http://localhost:3000/keranjangs")
+            .then((response) => this.setKeranjang(response.data))
+            .catch((error) => console.log(error));
+        })
+        .catch((error) => console.log(error));
+    },
+    checkout() {
+      if (this.pesan.nama && this.pesan.noMeja) {
+        // mengambil data keranjang untuk di masukan ke pesanan
+        this.pesan.Keranjangs = this.Keranjangs;
+        axios
+          .post("http://localhost:3000/pesanans", this.pesan)
+          .then(() => {
+            // hapus semua keranjang
+            this.Keranjangs.map(function (item) {
+              return axios
+                .delete("http://localhost:3000/keranjangs/" + item.id)
+                .catch((error) => console.log(error));
+            });
+            //   melempar data detail pesanan ke view keranjang
+            this.$router.push({ path: "/pesanan-sukses" });
+            //    jika berhasil maka gunakan toast vue toas norification untuk notifikasinya
+            this.$toast.success("sukses di pesan", {
               // sesuaikan atribut yang di butuhkan. attributnya ada di dokumentasinya
-              type: "error",
+              type: "success",
               position: "top-right",
               duration: 3000,
               dismissible: true,
             });
-
-            // hapus data supaya tidak mereload
-            axios
-            .get("http://localhost:3000/keranjangs")
-            .then((response)=> this.setKeranjang(response.data))
-            .catch((error) =>console.log(error))
-        })
-        .catch((error) => console.log(error));
-    },  
+          })
+          .catch((err) => console.log(err));
+      } else {
+        this.$toast.error("nama Dan no Meja Harus Di isi", {
+          // sesuaikan atribut yang di butuhkan. attributnya ada di dokumentasinya
+          type: "error",
+          position: "top-right",
+          duration: 3000,
+          dismissible: true,
+        });
+      }
+    },
   },
 
   mounted() {
